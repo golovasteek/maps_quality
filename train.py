@@ -16,6 +16,9 @@ def accuracy(predictions, labels):
 
 
 count = datalines.shape[0]
+image_size = datalines.shape[1]
+num_chanels = datalines.shape[3]
+
 train_set = datalines[:int(count*.8)]
 train_labels = labels[:int(count*.8)]
 validation_set = datalines[int(count*.8):int(count*0.9)]
@@ -30,15 +33,13 @@ print "Test set:       ", test_set.shape, test_labels.shape
 
 
 
-image_size = 128
-num_chanels = 4
 num_labels = 2
-batch_size = 61
-patch_size = 5
-depth = 8
+batch_size = 128
+patch_size = 10
+depth = 16
 pool_width = 2
 
-num_hidden = 64
+num_hidden = 200
 
 graph = tf.Graph()
 
@@ -67,17 +68,23 @@ with graph.as_default():
     layer1_weigths = weigth_var([patch_size, patch_size, num_chanels, depth])
     layer1_biases = bias_var([depth])
     
-    layer2_weigths = weigth_var([patch_size, patch_size, depth, 2*depth])
-    layer2_biases = bias_var([2*depth])
+    layer2_weigths = weigth_var([patch_size, patch_size, depth, depth])
+    layer2_biases = bias_var([depth])
     
-    layer3_weigths = weigth_var([patch_size, patch_size, 2*depth, 4*depth])
-    layer3_biases = bias_var([4*depth])
+    layer3_weigths = weigth_var([patch_size, patch_size, depth, depth])
+    layer3_biases = bias_var([depth])
 
-    layer4_weigths = weigth_var([image_size//8*image_size//8*(4*depth), num_hidden])
+    layer31_weights = weigth_var([patch_size, patch_size, depth, depth])
+    layer31_biases = bias_var([depth])
+
+    layer4_weigths = weigth_var([image_size//16*image_size//16*(depth), num_hidden])
     layer4_biases = bias_var([num_hidden])
    
-    layer5_weigths = weigth_var([num_hidden, num_labels])
-    layer5_biases = bias_var([num_labels])
+    layer5_weigths = weigth_var([num_hidden, num_hidden])
+    layer5_biases = bias_var([num_hidden])
+
+    layer6_weigths = weigth_var([num_hidden, num_labels])
+    layer6_biases = bias_var([num_labels])
     
     def model(data):
         conv = pool2x2(conv2d(data, layer1_weigths) + layer1_biases)
@@ -88,12 +95,17 @@ with graph.as_default():
 
         conv = pool2x2(conv2d(hidden, layer3_weigths) + layer3_biases)
         hidden = tf.nn.relu(conv)
+
+        conv = pool2x2(conv2d(hidden, layer31_weights) + layer31_biases)
+        hidden = tf.nn.relu(conv)
         
         shape = hidden.get_shape().as_list()
         reshape = tf.reshape(hidden, [shape[0], -1])
         hidden = tf.nn.relu(tf.matmul(reshape, layer4_weigths) + layer4_biases)
+
+        hidden = tf.nn.relu(tf.matmul(hidden, layer5_weigths) + layer5_biases)
         
-        return tf.matmul(hidden, layer5_weigths) + layer5_biases
+        return tf.matmul(hidden, layer6_weigths) + layer6_biases
     
     logits = model(tf_train_dataset)
     
@@ -102,7 +114,7 @@ with graph.as_default():
             logits=logits, labels=tf_train_labels))
     
     global_step = tf.Variable(0)
-    learn_rate = tf.train.exponential_decay(0.005, global_step, 100, 0.5)
+    learn_rate = tf.train.exponential_decay(0.0025, global_step, 100, 0.9)
     optimizer = tf.train.GradientDescentOptimizer(learn_rate).minimize(
         loss, global_step=global_step)
     
@@ -113,7 +125,7 @@ with graph.as_default():
 
 # In[8]:
 
-num_steps = 1001
+num_steps = 5001
 epoch = -1
 prev_epoch = -1
 with tf.Session(graph=graph) as session:
@@ -135,12 +147,13 @@ with tf.Session(graph=graph) as session:
             [optimizer, loss, batch_prediction], feed_dict=feed_dict)
         
         if (prev_epoch != epoch):
-            print "epoch: {:4}, learn_rate {:.4} loss: {:.2f} Batch: {:.2%}, valid: {:.2%}".format(
+            v = valid_prediction.eval()
+            print "epoch: {:4}, learn_rate {:.8f} loss: {:.4f} Batch: {:.2%}, valid: {:.2%}".format(
                     epoch,
                     learn_rate.eval(),
                     l,
                     accuracy(predictions, batch_labels),
-                    accuracy(valid_prediction.eval(), validation_labels))
+                    accuracy(v, validation_labels))
             
     #print "Test accuracy: {:.2f}%".format(accuracy(
     #    test_prediction.eval(), test_labels))
