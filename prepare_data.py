@@ -8,7 +8,8 @@ import numpy as np
 import cPickle as pickle
 
 
-TOKEN=open(".mapbox_token").read()
+TOKEN=open(".mapbox_token").read().strip()
+print "'{0}'".format(TOKEN)
 URL_TEMPLATE="https://api.mapbox.com/v4/{map_id}/{zoom}/{x}/{y}.jpg?access_token={token}"
 SCHEMA_TEMPLATE="https://api.mapbox.com/styles/v1/golovasteek/cizl1985r000o2sqjhqk0ny0m/tiles/256/{zoom}/{x}/{y}?access_token={token}"
 FILE_TEMPLATE="files/{map_id}/{zoom}/{x}/{y}.jpg"
@@ -19,7 +20,7 @@ SETS = [
     "y": 85975,
     "map_id": "grayschema",
     "url": SCHEMA_TEMPLATE,
-    "halfspan": 10,
+    "halfspan": 50,
 },
 {
     "zoom": 18,
@@ -27,7 +28,7 @@ SETS = [
     "y": 85975,
     "map_id": "mapbox.satellite",
     "url": URL_TEMPLATE,
-    "halfspan": 10,
+    "halfspan": 50,
 }]
 
 tile={
@@ -50,7 +51,7 @@ def download_tile(tile):
         os.makedirs(dir_name)
     with open(file_name, 'w+') as f:
         resp = requests.get(url)
-        assert resp.ok
+        assert resp.ok, resp.text
         f.write(resp.content)
     print "Downloaded:", file_name
 
@@ -66,6 +67,8 @@ def download_set(set_descr):
 for s in SETS:
     download_set(s)
 
+# Only download, images are loaded directly in tensorflow
+exit(1)
 
 def segments(shape, step_size=32, window_size=64):
     for x in range(0, shape[0] - window_size + 1, step_size):
@@ -84,8 +87,11 @@ for set_descr in SETS:
     for x in range(set_descr['x'] - set_descr['halfspan'], set_descr['x'] + set_descr['halfspan']):
         for y in range(set_descr['y'] - set_descr['halfspan'], set_descr['y'] + set_descr['halfspan']):
             tile.update({"x": x, "y": y})
-            image = ndimage.imread(FILE_TEMPLATE.format(**tile)).astype(np.float32)
-            imdata = (imresize(image, 0.5) - 256.0/2)/(256.0/2)
+            image = ndimage.imread(FILE_TEMPLATE.format(**tile))
+            imdata = imresize(image, 0.5).astype(np.float32)
+            imdata -= np.mean(imdata)
+            imdata /= 127
+            
             data[tile['map_id']][(x, y, 0)] = imdata
             imdata = np.rot90(imdata)
             data[tile['map_id']][(x, y, 1)] = imdata

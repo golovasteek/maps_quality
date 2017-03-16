@@ -3,10 +3,10 @@ import numpy as np
 import tensorflow as tf
 
 
-with open('datalines.npy') as f:
+with open('datalines_500.npy') as f:
     datalines = np.load(f)
 
-with open('labels.npy') as f:
+with open('labels_500.npy') as f:
     labels = np.load(f)
 
 
@@ -34,12 +34,11 @@ print "Test set:       ", test_set.shape, test_labels.shape
 
 
 num_labels = 2
-batch_size = 128
-patch_size = 10
+batch_size = 32
+patch_size = 3
 depth = 16
-pool_width = 2
 
-num_hidden = 200
+num_hidden = 64
 
 graph = tf.Graph()
 
@@ -74,14 +73,11 @@ with graph.as_default():
     layer3_weigths = weigth_var([patch_size, patch_size, depth, depth])
     layer3_biases = bias_var([depth])
 
-    layer31_weights = weigth_var([patch_size, patch_size, depth, depth])
-    layer31_biases = bias_var([depth])
-
-    layer4_weigths = weigth_var([image_size//16*image_size//16*(depth), num_hidden])
+    layer4_weigths = weigth_var([image_size//8*image_size//8*(depth), num_hidden])
     layer4_biases = bias_var([num_hidden])
    
-    layer5_weigths = weigth_var([num_hidden, num_hidden])
-    layer5_biases = bias_var([num_hidden])
+    #layer5_weigths = weigth_var([num_hidden, num_hidden])
+    #layer5_biases = bias_var([num_hidden])
 
     layer6_weigths = weigth_var([num_hidden, num_labels])
     layer6_biases = bias_var([num_labels])
@@ -96,14 +92,14 @@ with graph.as_default():
         conv = pool2x2(conv2d(hidden, layer3_weigths) + layer3_biases)
         hidden = tf.nn.relu(conv)
 
-        conv = pool2x2(conv2d(hidden, layer31_weights) + layer31_biases)
-        hidden = tf.nn.relu(conv)
+        #conv = pool2x2(conv2d(hidden, layer31_weights) + layer31_biases)
+        #hidden = tf.nn.relu(conv)
         
         shape = hidden.get_shape().as_list()
         reshape = tf.reshape(hidden, [shape[0], -1])
         hidden = tf.nn.relu(tf.matmul(reshape, layer4_weigths) + layer4_biases)
 
-        hidden = tf.nn.relu(tf.matmul(hidden, layer5_weigths) + layer5_biases)
+        #hidden = tf.nn.relu(tf.matmul(hidden, layer5_weigths) + layer5_biases)
         
         return tf.matmul(hidden, layer6_weigths) + layer6_biases
     
@@ -114,7 +110,7 @@ with graph.as_default():
             logits=logits, labels=tf_train_labels))
     
     global_step = tf.Variable(0)
-    learn_rate = tf.train.exponential_decay(0.0025, global_step, 100, 0.9)
+    learn_rate = tf.train.exponential_decay(0.005, global_step, 100, 0.7)
     optimizer = tf.train.GradientDescentOptimizer(learn_rate).minimize(
         loss, global_step=global_step)
     
@@ -134,6 +130,11 @@ with tf.Session(graph=graph) as session:
     for step in range(num_steps):
         prev_epoch = epoch
         epoch=(step * batch_size) // (train_labels.shape[0]-batch_size)
+        if (prev_epoch != epoch):
+            permutation = np.random.permutation(train_labels.shape[0])
+            train_labels = train_labels[permutation]
+            train_set = train_set[permutation]
+
         offset = (step * batch_size) % (train_labels.shape[0]-batch_size)
         batch_data = train_set[offset:(offset + batch_size)]
         batch_labels = train_labels[offset:(offset + batch_size)]
