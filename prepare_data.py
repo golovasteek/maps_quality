@@ -20,7 +20,7 @@ SETS = [
     "y": 85975,
     "map_id": "grayschema",
     "url": SCHEMA_TEMPLATE,
-    "halfspan": 50,
+    "halfspan": 80,
 },
 {
     "zoom": 18,
@@ -28,8 +28,25 @@ SETS = [
     "y": 85975,
     "map_id": "mapbox.satellite",
     "url": URL_TEMPLATE,
-    "halfspan": 50,
-}]
+    "halfspan": 80,
+},
+{
+    "zoom": 18,
+    "x": 132760,
+    "y": 90286,
+    "map_id": "grayschema",
+    "url": SCHEMA_TEMPLATE,
+    "halfspan": 60,
+},
+{
+    "zoom": 18,
+    "x": 132760,
+    "y": 90286,
+    "map_id": "mapbox.satellite",
+    "url": URL_TEMPLATE,
+    "halfspan": 60,
+},
+]
 
 tile={
     "zoom": 17,
