@@ -46,6 +46,22 @@ SETS = [
     "url": URL_TEMPLATE,
     "halfspan": 60,
 },
+{
+    "zoom": 18,
+    "x": 140225,
+    "y": 97486,
+    "map_id": "grayschema",
+    "url": SCHEMA_TEMPLATE,
+    "halfspan": 60,
+},
+{
+    "zoom": 18,
+    "x": 140225,
+    "y": 97486,
+    "map_id": "mapbox.satellite",
+    "url": URL_TEMPLATE,
+    "halfspan": 60,
+},
 ]
 
 tile={
