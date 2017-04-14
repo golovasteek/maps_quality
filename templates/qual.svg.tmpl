@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1"
+     baseProfile="full"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:ev="http://www.w3.org/2001/xml-events"
+     width="256px" height="256px">
+  <defs>
+    <style type="text/css"><![CDATA[
+    text {
+        font-family: sans-serif;
+    }
+    text.good {
+        fill: #66ff00;
+    }
+    text.bad {
+        fill: red;
+    }
+    rect.good {
+        stroke: #66ff00;
+    }
+    rect.bad {
+        stroke: red;
+    }
+    rect {
+        fill: none;
+        stroke-width: 2px;
+    }
+    ]]></style>
+  </defs>
+<rect class="{{ quality }}" x="0" y="0" width="100%" height="100%"></rect>
+<text class="{{ quality }}" x="10" y="30">{{ qual_value }}</text>
+<text class="bad" x="10" y="240">Bad</text>
+<text class="good" x="200" y="240">Good</text>
+</svg>

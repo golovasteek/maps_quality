@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <title>Human Eye Solutions - Maps Quality</title>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+
+    <script src="/static/jquery.js"></script>
+    
+</head>
+<body>
+
+
+
+<div id="mapid" style="width: 1024px; height: 768px;"></div>
+<script>
+    function toRad(grad) {
+        return grad * Math.PI / 180;
+    }
+
+    var mymap = L.map('mapid').setView([52.51, 13.40], 18);
+
+    function map_click(e) {
+        var zoom = mymap.getZoom();
+        var lon = e.latlng.lng;
+        var lat = e.latlng.lat;
+        var xf = (lon + 180) / 360 * (1 << zoom);
+        var yf = (1 - Math.log(Math.tan(toRad(lat)) + 1 / Math.cos(toRad(lat))) / Math.PI) / 2 * (1<<zoom);
+        var xtile = parseInt(Math.floor( xf ));
+        var ytile = parseInt(Math.floor( yf ));
+        var quater = parseInt(2 * Math.floor((yf - ytile) * 2) + Math.floor((xf - xtile) * 2));
+        var good = null;
+        if (quater == 2) {
+            good = false;
+        } else if (quater == 3) {
+            good = true;
+        }
+        if ( good != null) {
+            $.ajax({
+                type: "POST",
+                url: "http://127.0.0.1:3333/assess/"+ zoom +"/"+ xtile +"/" + ytile,
+                contentType: "application/json",
+                data: JSON.stringify({"good": good}),
+                success: function (response) {
+                        console.log("Success");
+                    }
+
+            });
+            console.log(xtile, ytile, zoom, good);
+        }
+    }
+
+
+    L.tileLayer('/static/files/{id}/{z}/{x}/{y}.jpg', {
+        maxZoom: 18,
+        id: 'mapbox.satellite'
+    }).addTo(mymap);
+
+    L.tileLayer('/static/files/{id}/{z}/{x}/{y}.jpg', {
+        maxZoom: 18,
+        id: 'grayschema',
+        opacity: 0.5
+    }).addTo(mymap);
+
+    L.tileLayer('http://127.0.0.1:3333/qual_tile/{z}/{x}/{y}.svg', {
+        maxZoom: 18,
+        id: 'qual',
+    }).addTo(mymap);
+
+    mymap.on('click', map_click);
+</script>
+
+
+
+</body>
+</html>
