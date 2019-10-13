@@ -58,12 +58,12 @@
     }
 
 
-    L.tileLayer('/static/files/{id}/{z}/{x}/{y}.jpg', {
+    L.tileLayer('/static/files/{id}/{z}/{x}/{y}.png', {
         maxZoom: 18,
         id: 'mapbox.satellite'
     }).addTo(mymap);
 
-    L.tileLayer('/static/files/{id}/{z}/{x}/{y}.jpg', {
+    L.tileLayer('/static/files/{id}/{z}/{x}/{y}.png', {
         maxZoom: 18,
         id: 'grayschema',
         opacity: 0.5
